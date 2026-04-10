@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沃尔玛选品实战互动指南 ⚡ 智能推演版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* <!-- Chosen Palette: Warm Neutrals & Deep Accents (bg-stone-50, text-stone-800, accent-emerald-600, accent-sky-700) -->
+        <!-- Application Structure Plan: Dashboard/Tabbed Interface with integrated Local Simulation Tools.
+             - Section 1 (Concept): Added "Concept Sandbox". Users input raw ideas -> Local JS rules engine structures it into the SOP framework -> dynamically updates the UI cards.
+             - Section 2 (Data): Added "Long-tail Keyword Simulator". Users input broad terms -> Local JS engine generates niche keywords using hardcoded databases and dynamic templates to visualize the "blue ocean" strategy.
+             - Section 3 (Tools): Remains the process flow.
+             This turns the guide from passive reading to an active ideation tool entirely locally in the browser. -->
+        <!-- Visualization & Content Choices: 
+             - Concept Pillars -> Interactive Cards + Local Gen -> Goal: Inform & Organize & Brainstorm.
+             - Product Research -> Scatter Chart (Canvas) -> Goal: Relationships/Compare.
+             - Market Analysis -> Doughnut Chart (Canvas) -> Goal: Proportions.
+             - Keyword Trend -> Line Chart (Canvas) + Simulated Keyword List -> Goal: Change over time & Actionable Insights. -->
+        <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+        */
+
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fafaf9; /* stone-50 */
+            color: #292524; /* stone-800 */
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 380px; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(231, 229, 228, 0.5);
+        }
+
+        .nav-btn.active {
+            border-bottom: 2px solid #059669; /* emerald-600 */
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #059669;
+        }
+        
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .ai-pulse {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .6; }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- 导航栏 -->
+    <header class="glass-panel sticky top-0 z-50 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🛒</span>
+                    <h1 class="font-bold text-xl tracking-tight text-stone-900">沃尔玛选品 SOP <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full ml-2 relative -top-1">⚡ 离线推演版</span></h1>
+                </div>
+                <nav class="flex gap-1 sm:gap-6" id="main-nav">
+                    <button class="nav-btn active px-2 sm:px-3 py-4 text-sm sm:text-base text-stone-600 hover:text-emerald-600 transition-colors" data-target="view-concept">一、产品概念</button>
+                    <button class="nav-btn px-2 sm:px-3 py-4 text-sm sm:text-base text-stone-600 hover:text-emerald-600 transition-colors" data-target="view-data">二、数据驱动</button>
+                    <button class="nav-btn px-2 sm:px-3 py-4 text-sm sm:text-base text-stone-600 hover:text-emerald-600 transition-colors" data-target="view-tools">三、实操闭环</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- ==================== 视图 1：产品概念 ==================== -->
+        <section id="view-concept" class="view-section fade-in">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-900 mb-4">构建“一击必中”的产品概念</h2>
+                <p class="text-stone-600 text-lg leading-relaxed bg-white p-5 rounded-lg border border-stone-200 shadow-sm">
+                    <strong>核心心法：</strong>选品不是公式化呆板的操作，<span class="text-emerald-600 font-bold">思路比产品重要</span>。输入您模糊的选品想法，让内置的推演沙盘帮您梳理成严密的产品逻辑。
+                </p>
+            </div>
+
+            <!-- 💡 本地概念生成器 -->
+            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200 shadow-sm mb-8">
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <div class="text-3xl">🧩</div>
+                    <div class="flex-1 w-full">
+                        <label for="ai-idea-input" class="block text-sm font-bold text-emerald-800 mb-1">💡 产品概念推演沙盘 (内置数据库)</label>
+                        <input type="text" id="ai-idea-input" class="w-full p-3 border border-emerald-300 rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="例如尝试输入：咖啡机、宠物窝、帐篷，或任意其他词汇...">
+                    </div>
+                    <button id="btn-generate-concept" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-md flex items-center justify-center gap-2" onclick="handleConceptGeneration()">
+                        <span>🚀 启动推演</span>
+                    </button>
+                </div>
+                <div id="concept-loading" class="hidden mt-4 text-sm text-emerald-700 font-medium ai-pulse">
+                    ⏳ 正在从本地商机库检索匹配逻辑模型，请稍候...
+                </div>
+                <div id="concept-error" class="hidden mt-4 text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200"></div>
+            </div>
+
+            <!-- 互动公式展示区 -->
+            <div class="bg-stone-900 text-stone-100 rounded-xl p-6 md:p-8 mb-10 shadow-lg relative overflow-hidden transition-all duration-500">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-6xl">💡</div>
+                <h3 class="text-sm uppercase tracking-widest text-emerald-400 font-semibold mb-4">产品逻辑万能公式</h3>
+                <p id="formula-text" class="text-xl md:text-2xl leading-relaxed font-light">
+                    “针对 <span class="text-emerald-400">目标用户群</span>，他们在 <span class="text-sky-400">特定场景</span> 下面临 <span class="text-amber-400 font-medium">核心痛点</span>，我们提供 <span class="bg-white/10 px-2 py-1 rounded">产品名称/类型</span>，通过 <span class="text-rose-400">核心功能/技术</span>，达到 <span class="text-purple-400">核心价值/收益</span>。”
+                </p>
+                <p class="text-stone-500 text-xs mt-4">*(使用上方推演沙盘，此公式将自动重构)*</p>
+            </div>
+
+            <!-- 四大支柱卡片 -->
+            <h3 class="text-xl font-bold text-stone-800 mb-6 flex items-center gap-2">
+                <span class="text-emerald-600">🏛️</span> 支撑概念的四大支柱
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-xl p-6 border border-stone-200 card-hover transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">👤</div>
+                        <h4 class="text-lg font-bold">1. 用户画像 (Who)</h4>
+                    </div>
+                    <div id="card-who" class="text-stone-600 text-sm space-y-2 mt-2 pt-2 border-t border-stone-100">
+                        <p><b>示例：</b>摒弃泛泛的“美国主妇”，细化到“郊区独栋、有2孩、注重周末聚会的中产女性”。</p>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-xl p-6 border border-stone-200 card-hover transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center text-2xl">⏳</div>
+                        <h4 class="text-lg font-bold">2. 使用场景 (Where/When)</h4>
+                    </div>
+                    <div id="card-where" class="text-stone-600 text-sm space-y-2 mt-2 pt-2 border-t border-stone-100">
+                        <p><b>示例：</b>周六想洗车但传统水枪太重漏水 → 你的便携水枪。场景即需求，唤醒需求的瞬间。</p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-xl p-6 border border-stone-200 card-hover transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-2xl">🎯</div>
+                        <h4 class="text-lg font-bold">3. 核心功能 (What)</h4>
+                    </div>
+                    <div id="card-what" class="text-stone-600 text-sm space-y-2 mt-2 pt-2 border-t border-stone-100">
+                        <p><b>示例：</b>竞品卖普通炸锅，你的核心功能就主打“一键自清洗”。寻找杀手锏功能。</p>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-white rounded-xl p-6 border border-stone-200 card-hover transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-2xl">💎</div>
+                        <h4 class="text-lg font-bold">4. 独特价值 (Why)</h4>
+                    </div>
+                    <div id="card-why" class="text-stone-600 text-sm space-y-2 mt-2 pt-2 border-t border-stone-100">
+                        <p><b>示例：</b>极强的供应链成本优势 (Cheaper)，或防摔包装体验 (Better)，给用户一个不买别人的理由。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 视图 2：数据驱动 ==================== -->
+        <section id="view-data" class="view-section hidden fade-in">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-900 mb-4">数据驱动的选品与市场分析</h2>
+                <p class="text-stone-600 text-lg leading-relaxed bg-white p-5 rounded-lg border border-stone-200 shadow-sm">
+                    验证和筛选。本模块将抽象的市场指标可视化，帮助您直观理解“挑蓝海”、“看趋势”和“防垄断”的数据特征。
+                </p>
+            </div>
+
+            <!-- 数据维度 Tab -->
+            <div class="flex flex-wrap gap-2 mb-6 border-b border-stone-200 pb-4">
+                <button class="data-tab-btn px-4 py-2 bg-sky-600 text-white rounded-md text-sm font-medium shadow-sm transition-all" data-chart="product">1. 选品维度 (挑蓝海)</button>
+                <button class="data-tab-btn px-4 py-2 bg-white text-stone-600 border border-stone-200 rounded-md text-sm font-medium hover:bg-stone-50 transition-all" data-chart="market">2. 市场维度 (看垄断)</button>
+                <button class="data-tab-btn px-4 py-2 bg-white text-stone-600 border border-stone-200 rounded-md text-sm font-medium hover:bg-stone-50 transition-all" data-chart="keyword">3. 词汇维度 (看趋势)</button>
+            </div>
+
+            <!-- 动态图表展示区 -->
+            <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+                <!-- 文本说明区 (JS动态更新) -->
+                <div id="chart-description" class="mb-4">
+                    <h3 class="text-xl font-bold text-sky-700 mb-2">寻找蓝海：高销量 + 低评论</h3>
+                    <p class="text-stone-600 text-sm">重点筛选位于图表<b>右下角（高销量、低评论）</b>的产品，这些通常是正处于上升期、竞争尚未白热化的红利产品。</p>
+                </div>
+
+                <!-- 💡 本地长尾词挖掘区 -->
+                <div id="ai-keyword-tool" class="hidden mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                    <div class="flex flex-col sm:flex-row gap-3 items-center">
+                        <label class="font-bold text-indigo-800 whitespace-nowrap">💡 长尾词模拟引擎：</label>
+                        <input type="text" id="ai-keyword-input" class="w-full sm:w-64 p-2 border border-indigo-300 rounded focus:ring-2 focus:ring-indigo-500" placeholder="输入竞争激烈的大词 (如: 炸锅)">
+                        <button onclick="handleKeywordGeneration()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 shadow flex items-center justify-center gap-1 transition-colors">
+                            <span>一键挖掘</span>
+                        </button>
+                    </div>
+                    <div id="keyword-loading" class="hidden mt-2 text-sm text-indigo-600 ai-pulse">⏳ 正在匹配词库规则，组合高转化蓝海词...</div>
+                    <div id="keyword-error" class="hidden mt-2 text-sm text-red-600"></div>
+                    <!-- 挖掘结果列表 -->
+                    <div id="keyword-results" class="hidden mt-4 bg-white rounded border border-indigo-100 p-3">
+                        <!-- 动态填充 -->
+                    </div>
+                </div>
+
+                <!-- 统一规范的图表容器 -->
+                <div class="w-full max-w-4xl mx-auto">
+                    <div class="chart-container">
+                        <canvas id="mainAnalysisChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 视图 3：实操闭环 ==================== -->
+        <section id="view-tools" class="view-section hidden fade-in">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-900 mb-4">实操工具联动闭环</h2>
+                <p class="text-stone-600 text-lg leading-relaxed bg-white p-5 rounded-lg border border-stone-200 shadow-sm">
+                    选品需要打通 <span class="font-bold text-blue-600">沃尔玛后台</span>、<span class="font-bold text-orange-500">卖家精灵</span> 与 <span class="font-bold text-red-600">1688/亚马逊</span> 三个平台的数据闭环。点击下方节点查看协同逻辑。
+                </p>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-stretch justify-center gap-6 mt-12 relative">
+                <!-- 连接线 -->
+                <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-stone-200 -z-10 transform -translate-y-1/2"></div>
+
+                <!-- 节点 1 -->
+                <div class="flex-1 bg-white rounded-xl border-2 border-orange-200 shadow-md p-6 relative cursor-pointer hover:border-orange-500 transition-colors group" onclick="showToolDetail('seller-sprite')">
+                    <div class="w-16 h-16 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-3xl mx-auto -mt-12 border-4 border-white shadow-sm mb-4">📊</div>
+                    <h3 class="text-center font-bold text-lg mb-2 text-stone-800">1. 卖家精灵 (SellerSprite)</h3>
+                    <p class="text-center text-sm text-stone-500 mb-4">发现市场与关键词</p>
+                </div>
+
+                <!-- 节点 2 -->
+                <div class="flex-1 bg-white rounded-xl border-2 border-red-200 shadow-md p-6 relative cursor-pointer hover:border-red-500 transition-colors group" onclick="showToolDetail('sourcing')">
+                    <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-3xl mx-auto -mt-12 border-4 border-white shadow-sm mb-4">📦</div>
+                    <h3 class="text-center font-bold text-lg mb-2 text-stone-800">2. 1688 & Amazon</h3>
+                    <p class="text-center text-sm text-stone-500 mb-4">货源核算与前台验证</p>
+                </div>
+
+                <!-- 节点 3 -->
+                <div class="flex-1 bg-white rounded-xl border-2 border-blue-200 shadow-md p-6 relative cursor-pointer hover:border-blue-600 transition-colors group" onclick="showToolDetail('walmart-center')">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-3xl mx-auto -mt-12 border-4 border-white shadow-sm mb-4">🏪</div>
+                    <h3 class="text-center font-bold text-lg mb-2 text-stone-800">3. 沃尔玛卖家后台</h3>
+                    <p class="text-center text-sm text-stone-500 mb-4">自身数据洞察</p>
+                </div>
+            </div>
+
+            <!-- 工具详情动态展示区 -->
+            <div id="tool-detail-box" class="mt-8 bg-stone-50 rounded-lg border border-stone-200 p-6 hidden fade-in">
+                <h4 id="tool-title" class="text-lg font-bold text-stone-800 mb-3 border-b border-stone-200 pb-2">标题</h4>
+                <div id="tool-content" class="text-sm text-stone-600 leading-relaxed space-y-2">内容</div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-auto py-6 text-center text-stone-400 text-sm border-t border-stone-200">
+        沃尔玛选品方法论互动演示 &copy; 基于源报告生成 ✨ 纯本地算法驱动
+    </footer>
+
+    <!-- JavaScript 逻辑 -->
+    <script>
+        // ==================== 1. 本地算法：产品概念推演模型 ====================
+        
+        // 预设经典商业案例库
+        const conceptDatabase = [
+            {
+                keywords: ["咖啡", "coffee", "杯"],
+                formula: "针对 <span class='text-emerald-400'>早晨通勤的白领</span>，他们在 <span class='text-sky-400'>匆忙出门却渴望现磨口感</span> 时面临 <span class='text-amber-400 font-medium'>传统机器太慢且难清洗</span> 的痛点，我们提供 <span class='bg-white/10 px-2 py-1 rounded'>一键萃取随行杯</span>，通过 <span class='text-rose-400'>内置微型高压泵和自洁系统</span>，达到 <span class='text-purple-400'>随时随地低成本享受精品咖啡</span> 的价值。",
+                who: "25-35岁、一二线城市、注重生活品质但时间紧凑的早晨通勤族，对速溶咖啡不满意。",
+                where: "工作日早上7:30-8:30的地铁上、网约车内，或者刚到办公室工位的一刻。",
+                what: "将高压萃取模块极简化，缩减至保温杯大小，并支持一键5秒清水自洁。",
+                why: "极具便携性(Better)，相比每天买星巴克具有极高的性价比(Cheaper)。"
+            },
+            {
+                keywords: ["宠物", "狗", "猫", "pet", "dog", "cat", "窝"],
+                formula: "针对 <span class='text-emerald-400'>养中大型犬的城市家庭</span>，他们在 <span class='text-sky-400'>换毛季及梅雨天</span> 下面临 <span class='text-amber-400 font-medium'>旧品异味大且难以拆洗晾干</span> 的痛点，我们提供 <span class='bg-white/10 px-2 py-1 rounded'>模块化速干防臭窝</span>，通过 <span class='text-rose-400'>全拉链分体结构与抗菌面料</span>，达到 <span class='text-purple-400'>3分钟拆卸、机洗半小时速干</span> 的价值。",
+                who: "拥有大平层或庭院、养有金毛/拉布拉多等大型犬、对家居卫生要求高的中产家庭。",
+                where: "潮湿的春季/梅雨季，狗狗外出踩水回家后，或常规的周末大扫除日。",
+                what: "100%全拆卸拉链设计，配合疏水速干面料，拒绝传统海绵发霉滋生细菌。",
+                why: "解决大型犬配件难清洗的绝对痛点(Different)，材质防撕咬延长寿命(Better)。"
+            },
+            {
+                keywords: ["帐篷", "户外", "camp", "tent"],
+                formula: "针对 <span class='text-emerald-400'>周末近郊休闲的年轻家庭</span>，他们在 <span class='text-sky-400'>到达营地准备扎营</span> 时面临 <span class='text-amber-400 font-medium'>专业装备穿杆太繁琐耗时</span> 的痛点，我们提供 <span class='bg-white/10 px-2 py-1 rounded'>全自动液压伞棚</span>，通过 <span class='text-rose-400'>液压弹簧支架技术</span>，达到 <span class='text-purple-400'>女生单人3秒成型、轻松带娃</span> 的价值。",
+                who: "有1-2个小孩、平时工作忙碌、倾向于“轻奢露营”或公园野餐的非硬核户外玩家。",
+                where: "周末下午的城市公园草坪，或者设施完善的商业露营地。",
+                what: "放弃极致抗风防雨指标，将搭建系统改为类似雨伞的“一键液压撑开”结构。",
+                why: "零学习门槛(Better)，造型更适合拍照打卡出片(Different)。"
+            }
+        ];
+
+        // 动态万能模板生成器
+        function generateDynamicConcept(inputWord) {
+            const sanitized = inputWord.replace(/</g, "&lt;").replace(/>/g, "&gt;").substring(0, 15);
+            return {
+                formula: `针对 <span class='text-emerald-400'>寻求高性价比的务实人群</span>，他们在 <span class='text-sky-400'>日常居家或工作场景</span> 下面临 <span class='text-amber-400 font-medium'>传统工具效率低下且容易损坏</span> 的痛点，我们提供 <span class='bg-white/10 px-2 py-1 rounded'>升级版 ${sanitized}</span>，通过 <span class='text-rose-400'>优化核心材质与人性化防呆设计</span>，达到 <span class='text-purple-400'>省时省力大幅提升使用体验</span> 的价值。`,
+                who: "注重实用性、追求质价比的理智型消费者，通常购买前会对比多款竞品的参数。",
+                where: `当现有产品突然损坏，或者在使用旧的 ${sanitized} 感到极度繁琐和不适的那个瞬间。`,
+                what: `去除一切花里胡哨的冗余设计，将 ${sanitized} 的最核心基础使用功能强化到极致。`,
+                why: "相比市面公模竞品，提供更完善的售后指导(Better)和更耐用的品质(Different)。"
+            };
+        }
+
+        function handleConceptGeneration() {
+            const inputEl = document.getElementById('ai-idea-input');
+            const loadingEl = document.getElementById('concept-loading');
+            const errorEl = document.getElementById('concept-error');
+            const btnEl = document.getElementById('btn-generate-concept');
+            
+            const idea = inputEl.value.trim().toLowerCase();
+            if (!idea) {
+                errorEl.textContent = "请先输入一个初步的产品想法！";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // UI 状态更新
+            errorEl.classList.add('hidden');
+            loadingEl.classList.remove('hidden');
+            btnEl.disabled = true;
+            btnEl.classList.add('opacity-70', 'cursor-not-allowed');
+
+            // 模拟算法处理延迟 (600ms)
+            setTimeout(() => {
+                let matchedData = null;
+                
+                // 1. 尝试匹配内置数据库
+                for (let caseItem of conceptDatabase) {
+                    if (caseItem.keywords.some(kw => idea.includes(kw))) {
+                        matchedData = caseItem;
+                        break;
+                    }
+                }
+                
+                // 2. 如果没匹配到，调用万能动态模板
+                if (!matchedData) {
+                    matchedData = generateDynamicConcept(idea);
+                }
+
+                // 更新UI
+                document.getElementById('formula-text').innerHTML = `💡 <b>算法重构公式：</b><br/>${matchedData.formula}`;
+                document.getElementById('card-who').innerHTML = `<p class="text-emerald-700 font-medium">💡 引擎定位人群：</p><p>${matchedData.who}</p>`;
+                document.getElementById('card-where').innerHTML = `<p class="text-sky-700 font-medium">💡 引擎痛点场景：</p><p>${matchedData.where}</p>`;
+                document.getElementById('card-what').innerHTML = `<p class="text-rose-700 font-medium">💡 引擎核心杀手锏：</p><p>${matchedData.what}</p>`;
+                document.getElementById('card-why').innerHTML = `<p class="text-purple-700 font-medium">💡 引擎独特卖点：</p><p>${matchedData.why}</p>`;
+                
+                // 恢复按钮状态
+                loadingEl.classList.add('hidden');
+                btnEl.disabled = false;
+                btnEl.classList.remove('opacity-70', 'cursor-not-allowed');
+                
+            }, 600);
+        }
+
+        // ==================== 2. 本地算法：长尾词挖掘模拟器 ====================
+        
+        const keywordDatabase = {
+            "炸锅": [
+                { word: "air fryer for small apartment", reason: "明确了空间限制，切入'小户型/单身公寓'的细分人群，避开主流大容量红海。" },
+                { word: "air fryer with easy clean basket", reason: "直击用户使用完后'清洗繁琐'的最大痛点，主打免维护特性。" },
+                { word: "retro style air fryer mint green", reason: "切换了购买动机，将家电转化为'家居装饰品'，吸引颜值党。" }
+            ],
+            "帐篷": [
+                { word: "pop up tent for 4 person", reason: "明确了人数和'秒开'的便捷属性，避开专业户外，主打家庭休闲。" },
+                { word: "waterproof camping tent with porch", reason: "增加了'带门廊'这一具体场景需求，转化率极高。" },
+                { word: "tent for kids indoor play", reason: "直接切换了使用场景（室内/儿童），完全避开户外硬核装备红海。" }
+            ]
+        };
+
+        function generateDynamicKeywords(seed) {
+            const s = seed.substring(0, 15);
+            return [
+                { word: `${s} for small spaces`, reason: "切入'小空间/便携'人群，解决体积与收纳痛点。" },
+                { word: `best ${s} for beginners`, reason: "针对'新手/入门'用户，主打简单易用，降低决策门槛。" },
+                { word: `${s} with easy clean feature`, reason: "叠加'易清洗/免维护'属性，直击家务清洁痛点。" },
+                { word: `heavy duty ${s} commercial`, reason: "切入'商用/耐用重型'细分市场，竞争少且利润更高。" },
+                { word: `gift ${s} for holiday`, reason: "增加'节日送礼'属性，拓宽了特定时间节点的搜索流量。" }
+            ];
+        }
+
+        function handleKeywordGeneration() {
+            const inputEl = document.getElementById('ai-keyword-input');
+            const loadingEl = document.getElementById('keyword-loading');
+            const errorEl = document.getElementById('keyword-error');
+            const resultsBox = document.getElementById('keyword-results');
+            
+            const seedWord = inputEl.value.trim().toLowerCase();
+            if (!seedWord) {
+                errorEl.textContent = "请输入需要挖掘的大词！";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            errorEl.classList.add('hidden');
+            resultsBox.classList.add('hidden');
+            loadingEl.classList.remove('hidden');
+
+            setTimeout(() => {
+                let results = [];
+                // 1. 查本地精准匹配库
+                for (let key in keywordDatabase) {
+                    if (seedWord.includes(key)) {
+                        results = keywordDatabase[key];
+                        break;
+                    }
+                }
+                
+                // 2. 动态模板生成
+                if (results.length === 0) {
+                    results = generateDynamicKeywords(seedWord);
+                }
+                
+                let html = `<h4 class="font-bold text-indigo-800 mb-2 border-b border-indigo-100 pb-2">🎯 基于 "${seedWord}" 的模拟长尾词：</h4><ul class="space-y-3">`;
+                results.forEach((item, index) => {
+                    html += `
+                        <li class="bg-indigo-50/50 p-2 rounded">
+                            <div class="font-bold text-indigo-700"><span class="bg-indigo-200 text-indigo-800 text-xs px-1.5 py-0.5 rounded mr-1">词${index+1}</span> ${item.word}</div>
+                            <div class="text-sm text-stone-600 mt-1"><b>洞察：</b>${item.reason}</div>
+                        </li>`;
+                });
+                html += `</ul>`;
+                
+                resultsBox.innerHTML = html;
+                loadingEl.classList.add('hidden');
+                resultsBox.classList.remove('hidden');
+                
+            }, 600);
+        }
+
+
+        // ==================== UI 导航与图表逻辑 ====================
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const views = document.querySelectorAll('.view-section');
+
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                navBtns.forEach(b => b.classList.remove('active', 'border-emerald-600', 'text-emerald-600', 'font-semibold'));
+                e.target.classList.add('active', 'border-emerald-600', 'text-emerald-600', 'font-semibold');
+
+                const targetId = e.target.getAttribute('data-target');
+                views.forEach(view => {
+                    if(view.id === targetId) {
+                        view.classList.remove('hidden');
+                        if(targetId === 'view-data' && currentChartInstance) {
+                            setTimeout(() => { currentChartInstance.resize(); }, 50);
+                        }
+                    } else {
+                        view.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        let currentChartInstance = null;
+        const ctx = document.getElementById('mainAnalysisChart').getContext('2d');
+        const chartDesc = document.getElementById('chart-description');
+        const aiKeywordTool = document.getElementById('ai-keyword-tool');
+        
+        const chartConfigs = {
+            product: {
+                title: '寻找蓝海：销量与评论数关系图 (模拟抽样)',
+                desc: '<h3 class="text-xl font-bold text-sky-700 mb-2">选品维度：挑蓝海</h3><p class="text-stone-600 text-sm">通过数据库过滤条件，重点筛选位于图表<b class="text-emerald-600">右下角象限（高销量、低评论）</b>的产品，这些通常是处于上升期红利的“蓝海”机会。</p>',
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '常规产品区 (红海/滞销)',
+                        data: Array.from({length: 40}, () => ({x: Math.random() * 500, y: Math.random() * 1000 + 500})),
+                        backgroundColor: 'rgba(168, 162, 158, 0.5)' 
+                    },
+                    {
+                        label: '蓝海潜力区 (高销低评)',
+                        data: Array.from({length: 15}, () => ({x: Math.random() * 500 + 500, y: Math.random() * 300})),
+                        backgroundColor: 'rgba(5, 150, 105, 0.8)',
+                        pointRadius: 6, pointHoverRadius: 8
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: '近期销量预估' } }, y: { title: { display: true, text: '历史评论积累' } } } }
+            },
+            market: {
+                title: '市场分析维度：类目品牌垄断率示意',
+                desc: '<h3 class="text-xl font-bold text-stone-700 mb-2">市场维度：看垄断与找真空</h3><p class="text-stone-600 text-sm">如果Top品牌占据了超过 <b class="text-rose-500">70%</b> 的市场份额，说明垄断严重，新手慎入。需寻找“销量最高但卖家最少”的价格带切入。</p>',
+                type: 'doughnut',
+                data: {
+                    labels: ['Top 3 头部品牌', '腰部品牌', '中小卖家'],
+                    datasets: [{ data: [75, 15, 10], backgroundColor: ['#e11d48', '#fbbf24', '#34d399'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '60%' }
+            },
+            keyword: {
+                title: '关键词维度：24个月搜索趋势分析',
+                desc: '<h3 class="text-xl font-bold text-indigo-700 mb-2">词汇维度：挖长尾与看趋势</h3><p class="text-stone-600 text-sm mb-4">分析搜索趋势判断产品的季节性。坚决避开衰退期产品，避开大词红海。<br/><br/>👇 <b>不知道怎么找长尾词？试试下方内置的 💡 本地挖掘引擎。</b></p>',
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '大词红海 (平缓下降)',
+                        data: [8000, 7800, 7500, 7000, 6800, 6500, 6000, 5800, 5500, 5000, 4800, 4500],
+                        borderColor: '#a8a29e', tension: 0.4
+                    },
+                    {
+                        label: '精准长尾词 (上升趋势)',
+                        data: [1000, 1200, 1500, 2000, 3500, 6000, 8500, 5000, 3000, 2000, 1500, 1200],
+                        borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', fill: true, tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            }
+        };
+
+        function renderChart(type) {
+            const config = chartConfigs[type];
+            chartDesc.innerHTML = config.desc;
+            
+            // 只有在关键词Tab才显示本地挖掘工具
+            if (type === 'keyword') {
+                aiKeywordTool.classList.remove('hidden');
+            } else {
+                aiKeywordTool.classList.add('hidden');
+            }
+            
+            if (currentChartInstance) currentChartInstance.destroy();
+
+            currentChartInstance = new Chart(ctx, {
+                type: config.type,
+                data: config.data,
+                options: {
+                    ...config.options,
+                    plugins: { title: { display: true, text: config.title, font: {size: 16} } }
+                }
+            });
+        }
+
+        const dataTabBtns = document.querySelectorAll('.data-tab-btn');
+        dataTabBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                dataTabBtns.forEach(b => {
+                    b.classList.remove('bg-sky-600', 'text-white');
+                    b.classList.add('bg-white', 'text-stone-600');
+                });
+                e.target.classList.remove('bg-white', 'text-stone-600');
+                e.target.classList.add('bg-sky-600', 'text-white');
+
+                renderChart(e.target.getAttribute('data-chart'));
+            });
+        });
+
+        renderChart('product'); // Init
+
+        const toolData = {
+            'seller-sprite': { title: "1. 卖家精灵 (SellerSprite) - 前端数据挖掘", content: `<ul class="list-disc pl-5 space-y-2"><li><b>选市场：</b>避开被大牌垄断的红海。</li><li><b>选关键词：</b>设置门槛(如: 搜索量>5000)，挖掘蓝海需求。</li><li><b>选产品：</b>导出Top500数据，寻找“高销量低评论”。</li></ul>` },
+            'sourcing': { title: "2. 1688 & 亚马逊 (Amazon) - 供应链与趋势验证", content: `<ul class="list-disc pl-5 space-y-2"><li><b>查同款：</b>反向搜索1688，核算成本与溢价空间。</li><li><b>趋势推演：</b>根据1688近期销量推测零售表现。</li><li><b>跨平台验证：</b>去Amazon前台核实真实销量和打法。</li></ul>` },
+            'walmart-center': { title: "3. 沃尔玛卖家后台 (Seller Center) - 官方数据校验", content: `<ul class="list-disc pl-5 space-y-2"><li><b>搜索洞察：</b>查看商品搜索表现。</li><li><b>关键指标：</b>关注展现量、点击率转化。</li><li><b>流量反查：</b>结合报告找出竞品核心词，应用到广告库。</li></ul>` }
+        };
+
+        function showToolDetail(toolKey) {
+            const detailBox = document.getElementById('tool-detail-box');
+            document.getElementById('tool-title').innerHTML = toolData[toolKey].title;
+            document.getElementById('tool-content').innerHTML = toolData[toolKey].content;
+            
+            detailBox.classList.remove('hidden');
+            detailBox.classList.remove('fade-in');
+            void detailBox.offsetWidth;
+            detailBox.classList.add('fade-in');
+        }
+    </script>
+</body>
+</html>
