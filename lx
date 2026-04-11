@@ -1,0 +1,737 @@
+import React, { useState, useEffect } from 'react';
+import { BookOpen, ChevronRight, ChevronDown, Play, CheckCircle, Code, Terminal, AlertCircle, Lightbulb, Eye, ArrowLeft, ArrowRight, Target } from 'lucide-react';
+
+// --- 题库模板生成器 (用于动态扩充题目到至少10题) ---
+function getPaddedExercise(sectionTitle, sectionId, index) {
+  const templates = [
+    {
+      title: '基础打印测试',
+      desc: `【巩固测试】作为熟悉 ${sectionTitle} 的第一步，请使用 \`print()\` 函数打印出本节标题："${sectionTitle}"。`,
+      init: `# 请打印标题\n`,
+      ans: `print("${sectionTitle}")`,
+      out: sectionTitle
+    },
+    {
+      title: '四则运算测试',
+      desc: `【运算测试】请计算并打印 ${index * 10} + ${index * 5} 的结果。`,
+      init: `# 计算并打印结果\n`,
+      ans: `print(${index * 10 + index * 5})`,
+      out: `${index * 10 + index * 5}`
+    },
+    {
+      title: '布尔逻辑测试',
+      desc: `【布尔测试】请打印表达式 \`10 > 5\` 的布尔值结果。`,
+      init: `# 打印布尔判断结果\n`,
+      ans: `print(10 > 5)`,
+      out: `True`
+    },
+    {
+      title: '循环结构强化',
+      desc: `【循环测试】请使用 for 循环打印 3 次 "Python"（每次占一行）。`,
+      init: `# 请使用循环打印\n`,
+      ans: `for _ in range(3):\n    print("Python")`,
+      out: `Python\nPython\nPython`
+    },
+    {
+      title: '类型转换巩固',
+      desc: `【类型转换】请将字符串 "2024" 转换为整数，并加上 1，打印最后的结果。`,
+      init: `s = "2024"\n# 请在此处编写代码\n`,
+      ans: `print(int(s) + 1)`,
+      out: `2025`
+    }
+  ];
+  const t = templates[index % templates.length];
+  return {
+    id: `ex-${sectionId}-padded-${index}`,
+    title: t.title,
+    description: t.desc,
+    initialCode: t.init,
+    expectedOutput: t.out,
+    answer: t.ans,
+    explanation: `这是针对【${sectionTitle}】的强化练习。大量的代码编写是掌握 Python 基础语法的关键环节。`
+  };
+}
+
+// --- 大章综合测验模板生成器 (每个大章10道综合题) ---
+function getChapterSummaryExercise(chapterTitle, chapterId, index) {
+  const templates = [
+    {
+      title: '综合应用 - 逻辑判断',
+      desc: `【综合测试1】结合本章知识，根据变量 x 的值进行判断：如果是偶数打印 "Even"，奇数打印 "Odd"。（假设 x = ${index + 4}）`,
+      init: `x = ${index + 4}\n# 请编写综合逻辑\n`,
+      ans: `x = ${index + 4}\nif x % 2 == 0:\n    print("Even")\nelse:\n    print("Odd")`,
+      out: (index + 4) % 2 === 0 ? "Even" : "Odd"
+    },
+    {
+      title: '综合应用 - 列表与循环',
+      desc: `【综合测试2】遍历 range(1, 4)，将每个数字乘以本章的综合难度系数（假设为 ${index + 2}）并分行打印。`,
+      init: `# 请编写代码\n`,
+      ans: `for i in range(1, 4):\n    print(i * ${index + 2})`,
+      out: [1, 2, 3].map(i => i * (index + 2)).join('\n')
+    },
+    {
+      title: '综合应用 - 字符串处理',
+      desc: `【综合测试3】将字符串 "python" 首字母大写，并与本大章标题拼接打印（中间加空格）。`,
+      init: `title = "${chapterTitle}"\ns = "python"\n# 请编写代码\n`,
+      ans: `title = "${chapterTitle}"\ns = "python"\nprint(s.capitalize() + " " + title)`,
+      out: `Python ${chapterTitle}`
+    },
+    {
+      title: '综合应用 - 异常与输出',
+      desc: `【综合测试4】使用 print() 结合单行 if-else 表达式：如果当前大章标题包含 "面向对象" 四个字则输出 Yes，否则输出 No。`,
+      init: `title = "${chapterTitle}"\n# 请编写代码\n`,
+      ans: `title = "${chapterTitle}"\nprint("Yes" if "面向对象" in title else "No")`,
+      out: chapterTitle.includes("面向对象") ? "Yes" : "No"
+    },
+    {
+      title: '综合应用 - 数学综合计算',
+      desc: `【综合测试5】计算表达式 (${index} * 10 + 5) 的平方，并打印最终结果。`,
+      init: `# 请编写代码\n`,
+      ans: `print((${index} * 10 + 5) ** 2)`,
+      out: String((index * 10 + 5) ** 2)
+    },
+    {
+      title: '综合应用 - 数据结构组合',
+      desc: `【综合测试6】创建一个包含元素 [1, 2, 3] 的列表，向其末尾追加数字 ${index + 10}，最后打印列表的总长度。`,
+      init: `L = [1, 2, 3]\n# 请编写代码\n`,
+      ans: `L = [1, 2, 3]\nL.append(${index + 10})\nprint(len(L))`,
+      out: '4'
+    },
+    {
+      title: '综合应用 - 字典读取',
+      desc: `【综合测试7】给定字典 d = {'chapter': '${chapterTitle}', 'score': 100}，请根据 key 打印出 score 的值。`,
+      init: `d = {'chapter': '${chapterTitle}', 'score': 100}\n# 请编写代码\n`,
+      ans: `d = {'chapter': '${chapterTitle}', 'score': 100}\nprint(d['score'])`,
+      out: '100'
+    },
+    {
+      title: '综合应用 - 集合去重',
+      desc: `【综合测试8】给定列表 L = [1, 2, 2, 3, 3, 3]，使用 set() 函数进行去重，并打印去重后的元素总个数。`,
+      init: `L = [1, 2, 2, 3, 3, 3]\n# 请编写代码\n`,
+      ans: `L = [1, 2, 2, 3, 3, 3]\nprint(len(set(L)))`,
+      out: '3'
+    },
+    {
+      title: '综合应用 - 类型识别',
+      desc: `【综合测试9】请打印出变量 ${index + 0.5} 的数据类型名称（即 float）。提示：使用 type(val).__name__ 获取名称字符串。`,
+      init: `val = ${index + 0.5}\n# 请编写代码\n`,
+      ans: `val = ${index + 0.5}\nprint(type(val).__name__)`,
+      out: 'float'
+    },
+    {
+      title: '综合应用 - 圆满结课',
+      desc: `【综合测试10】恭喜你来到了本章最后一道题！请用 print() 输出："【${chapterTitle}】综合测试通过！"`,
+      init: `# 请编写代码庆祝\n`,
+      ans: `print("【${chapterTitle}】综合测试通过！")`,
+      out: `【${chapterTitle}】综合测试通过！`
+    }
+  ];
+  
+  const t = templates[index % templates.length];
+  return {
+    id: `ex-${chapterId}-summary-${index}`,
+    title: t.title,
+    description: t.desc,
+    initialCode: t.init,
+    expectedOutput: t.out,
+    answer: t.ans,
+    explanation: `这是【${chapterTitle}】的跨小节综合测验。综合运用所学知识（如控制流、数据结构组合等）才能在实际开发中游刃有余。`
+  };
+}
+
+// --- 手工精编题库 & 动态补全引擎 ---
+const RAW_COURSE_DATA = [
+  {
+    id: 'ch1', title: 'Python基础',
+    sections: [
+      {
+        id: 'ch1-1', title: '数据类型和变量',
+        exercises: [
+          { id: 'ex-ch1-1-0', title: '输出字符串', description: '请用 `print()` 函数输出字符串 `"Hello, world!"`。', initialCode: '# 编写代码\n', expectedOutput: 'Hello, world!', answer: 'print("Hello, world!")', explanation: 'print() 是基本输出函数，字符串需用引号括起。' },
+          { id: 'ex-ch1-1-1', title: '整数计算', description: '请使用 `print()` 计算并输出 `100 + 200` 的结果。', initialCode: '# 计算 100+200\n', expectedOutput: '300', answer: 'print(100 + 200)', explanation: 'Python 支持直接在 print 内进行数学计算。' },
+          { id: 'ex-ch1-1-2', title: '多变量赋值', description: '请同时为变量 a 和 b 赋值为 10 和 20，并打印 `a + b`。', initialCode: '# 赋值并打印\n', expectedOutput: '30', answer: 'a, b = 10, 20\nprint(a + b)', explanation: 'Python 支持同行多变量赋值。' },
+          { id: 'ex-ch1-1-3', title: '字符串转义', description: '打印出包含单引号的字符串：`I\'m "OK"!`', initialCode: '# 注意转义符\n', expectedOutput: 'I\'m "OK"!', answer: 'print(\'I\\\'m "OK"!\')', explanation: '使用 \\ 进行转义。' },
+          { id: 'ex-ch1-1-4', title: '多行字符串', description: '利用 `\'\'\'...\'\'\'` 打印出多行内容：第一行 line1，第二行 line2', initialCode: 'print(\'\'\'line1\nline2\'\'\')', expectedOutput: 'line1\nline2', answer: '# 运行即可', explanation: '三引号允许字符串跨多行。' },
+          { id: 'ex-ch1-1-5', title: '布尔值 AND', description: '判断并打印 `True and False` 的结果。', initialCode: '# 打印布尔值\n', expectedOutput: 'False', answer: 'print(True and False)', explanation: 'and 运算只要有一个是 False 结果就是 False。' },
+          { id: 'ex-ch1-1-6', title: '布尔值 OR', description: '判断并打印 `5 > 3 or 1 > 3` 的结果。', initialCode: '# 打印布尔值\n', expectedOutput: 'True', answer: 'print(5 > 3 or 1 > 3)', explanation: 'or 运算只要有一个 True 结果就是 True。' },
+          { id: 'ex-ch1-1-7', title: '空值判断', description: '声明变量 n 赋值为空值 None，并打印 n。', initialCode: 'n = \n', expectedOutput: 'None', answer: 'n = None\nprint(n)', explanation: 'None 是 Python 的特殊空值。' },
+          { id: 'ex-ch1-1-8', title: '变量重绑定', description: '变量 x 初始为整数 10，请将其重新赋值为字符串 "Hello"，并打印。', initialCode: 'x = 10\n# 重新赋值为 "Hello"\n\nprint(x)', expectedOutput: 'Hello', answer: 'x = "Hello"\nprint(x)', explanation: 'Python 是动态语言，变量类型不固定。' },
+          { id: 'ex-ch1-1-9', title: '常量模拟', description: 'Python 没有常量。请定义一个大写的全名 PI 代表 3.14159，并打印。', initialCode: '# 定义 PI\n', expectedOutput: '3.14159', answer: 'PI = 3.14159\nprint(PI)', explanation: '通常用全部大写的变量名表示常量。' }
+        ]
+      },
+      {
+        id: 'ch1-2', title: '字符串和编码',
+        exercises: [
+          { id: 'ex-ch1-2-0', title: '格式化输出', description: '使用 f-string 输出："Hello, 小明, 你的成绩是 98"。', initialCode: 'name = "小明"\nscore = 98\n', expectedOutput: 'Hello, 小明, 你的成绩是 98', answer: 'print(f"Hello, {name}, 你的成绩是 {score}")', explanation: 'f-string 是最现代的字符串格式化。' }
+        ]
+      },
+      {
+        id: 'ch1-3', title: '使用list和tuple',
+        exercises: [
+          { id: 'ex-ch1-3-0', title: '操作列表', description: '在 list 末尾追加 `"Banana"` 并打印：', initialCode: 'L = ["Apple", "Orange"]\n\nprint(L)', expectedOutput: "['Apple', 'Orange', 'Banana']", answer: 'L.append("Banana")\nprint(L)', explanation: 'append() 在末尾追加。' }
+        ]
+      },
+      {
+        id: 'ch1-4', title: '条件判断',
+        exercises: [
+          { id: 'ex-ch1-4-0', title: '基础判断', description: '判断变量 age 是否大于 18，如果是打印 "Adult"', initialCode: 'age = 20\n', expectedOutput: 'Adult', answer: 'if age > 18:\n    print("Adult")', explanation: 'if 语句的基础使用。' }
+        ]
+      },
+      {
+        id: 'ch1-5', title: '循环',
+        exercises: [
+          { id: 'ex-ch1-5-0', title: '1-10求和', description: '使用 for 循环计算 1 到 10 之和并打印', initialCode: 'sum = 0\n', expectedOutput: '55', answer: 'for x in range(1, 11):\n    sum += x\nprint(sum)', explanation: 'range(1, 11) 生成 1~10。' }
+        ]
+      },
+      { id: 'ch1-6', title: '使用dict和set', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch2', title: '函数',
+    sections: [
+      { id: 'ch2-1', title: '调用函数', exercises: [] },
+      { id: 'ch2-2', title: '定义函数', exercises: [] },
+      { id: 'ch2-3', title: '函数的参数', exercises: [] },
+      { id: 'ch2-4', title: '递归函数', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch3', title: '高级特性',
+    sections: [
+      { id: 'ch3-1', title: '切片', exercises: [] },
+      { id: 'ch3-2', title: '迭代', exercises: [] },
+      { id: 'ch3-3', title: '列表生成式', exercises: [] },
+      { id: 'ch3-4', title: '生成器', exercises: [] },
+      { id: 'ch3-5', title: '迭代器', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch4', title: '函数式编程',
+    sections: [
+      { id: 'ch4-1', title: '高阶函数', exercises: [] },
+      { id: 'ch4-2', title: '返回函数', exercises: [] },
+      { id: 'ch4-3', title: '匿名函数', exercises: [] },
+      { id: 'ch4-4', title: '装饰器', exercises: [] },
+      { id: 'ch4-5', title: '偏函数', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch5', title: '模块',
+    sections: [
+      { id: 'ch5-1', title: '使用模块', exercises: [] },
+      { id: 'ch5-2', title: '安装第三方模块', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch6', title: '面向对象编程',
+    sections: [
+      { id: 'ch6-1', title: '类和实例', exercises: [] },
+      { id: 'ch6-2', title: '访问限制', exercises: [] },
+      { id: 'ch6-3', title: '继承和多态', exercises: [] },
+      { id: 'ch6-4', title: '获取对象信息', exercises: [] },
+      { id: 'ch6-5', title: '实例属性和类属性', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch7', title: '面向对象高级编程',
+    sections: [
+      { id: 'ch7-1', title: '使用__slots__', exercises: [] },
+      { id: 'ch7-2', title: '使用@property', exercises: [] },
+      { id: 'ch7-3', title: '多重继承', exercises: [] },
+      { id: 'ch7-4', title: '定制类', exercises: [] },
+      { id: 'ch7-5', title: '使用枚举类', exercises: [] },
+      { id: 'ch7-6', title: '使用元类', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch8', title: '错误、调试和测试',
+    sections: [
+      { id: 'ch8-1', title: '错误处理', exercises: [] },
+      { id: 'ch8-2', title: '调试', exercises: [] },
+      { id: 'ch8-3', title: '单元测试', exercises: [] },
+      { id: 'ch8-4', title: '文档测试', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch9', title: 'IO编程',
+    sections: [
+      { id: 'ch9-1', title: '文件读写', exercises: [] },
+      { id: 'ch9-2', title: 'StringIO和BytesIO', exercises: [] },
+      { id: 'ch9-3', title: '操作文件和目录', exercises: [] },
+      { id: 'ch9-4', title: '序列化', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch10', title: '进程和线程',
+    sections: [
+      { id: 'ch10-1', title: '多进程', exercises: [] },
+      { id: 'ch10-2', title: '多线程', exercises: [] },
+      { id: 'ch10-3', title: 'ThreadLocal', exercises: [] },
+      { id: 'ch10-4', title: '进程 vs. 线程', exercises: [] },
+      { id: 'ch10-5', title: '分布式进程', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch11', title: '正则表达式',
+    sections: [
+      { id: 'ch11-1', title: '正则表达式', exercises: [] }
+    ]
+  },
+  {
+    id: 'ch12', title: '常用内建模块',
+    sections: [
+      { id: 'ch12-1', title: 'datetime', exercises: [] },
+      { id: 'ch12-2', title: 'collections', exercises: [] },
+      { id: 'ch12-3', title: 'base64', exercises: [] },
+      { id: 'ch12-4', title: 'struct', exercises: [] },
+      { id: 'ch12-5', title: 'hashlib', exercises: [] },
+      { id: 'ch12-6', title: 'hmac', exercises: [] },
+      { id: 'ch12-7', title: 'itertools', exercises: [] },
+      { id: 'ch12-8', title: 'contextlib', exercises: [] },
+      { id: 'ch12-9', title: 'urllib', exercises: [] },
+      { id: 'ch12-10', title: 'XML', exercises: [] },
+      { id: 'ch12-11', title: 'HTMLParser', exercises: [] }
+    ]
+  }
+];
+
+// 动态加工题库：确保所有章节都有 10 道题，并为大章添加总结小节
+const COURSE_DATA = RAW_COURSE_DATA.map(chapter => {
+  const processedSections = chapter.sections.map(section => {
+    const paddedExercises = [...(section.exercises || [])];
+    let i = paddedExercises.length;
+    while (paddedExercises.length < 10) {
+      paddedExercises.push(getPaddedExercise(section.title, section.id, i));
+      i++;
+    }
+    return { ...section, exercises: paddedExercises };
+  });
+
+  // 【新增】为每个大章追加一个“总结与综合测验”小节
+  processedSections.push({
+    id: `${chapter.id}-summary`,
+    title: '🎯 本章总结与综合测验',
+    summary: `《${chapter.title}》章节核心点回顾：\n\n在本章中，您学习了该模块下相关的基础结构、高级特性和经典开发范式。从基础逻辑的编排到高级抽象思维的应用，熟练掌握本章内容是迈向资深 Python 开发者的必经之路。\n\n下方的 10 道综合测试题将把本大章涉及的知识点进行杂糅与融合考察。建议您在不翻阅之前代码的情况下，独立尝试完成这些挑战！`,
+    exercises: Array.from({ length: 10 }).map((_, idx) => getChapterSummaryExercise(chapter.title, chapter.id, idx))
+  });
+
+  return {
+    ...chapter,
+    sections: processedSections
+  };
+});
+
+export default function App() {
+  const [pyodide, setPyodide] = useState(null);
+  const [isLoadingPy, setIsLoadingPy] = useState(true);
+  
+  // 状态：UI导航
+  const [activeChapterId, setActiveChapterId] = useState(COURSE_DATA[0].id);
+  const [activeSectionId, setActiveSectionId] = useState(COURSE_DATA[0].sections[0].id);
+  const [activeExerciseIndex, setActiveExerciseIndex] = useState(0); // 核心：题目游标 (0 - 9)
+  const [expandedChapters, setExpandedChapters] = useState({ [COURSE_DATA[0].id]: true });
+
+  // 状态：代码和执行
+  const [userCodes, setUserCodes] = useState({}); 
+  const [consoleOutput, setConsoleOutput] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [successStatus, setSuccessStatus] = useState({}); 
+  const [showAnswer, setShowAnswer] = useState(false); 
+
+  const activeChapter = COURSE_DATA.find(c => c.id === activeChapterId);
+  const activeSection = activeChapter?.sections.find(s => s.id === activeSectionId);
+  const activeExercise = activeSection?.exercises[activeExerciseIndex];
+  const isLastExercise = activeExerciseIndex === (activeSection?.exercises.length - 1);
+  const isFirstExercise = activeExerciseIndex === 0;
+
+  // 初始化加载 Pyodide (WebAssembly Python 解释器)
+  useEffect(() => {
+    const loadPyodideAsync = async () => {
+      try {
+        if (!window.loadPyodide) {
+          const pyodideScript = document.createElement('script');
+          pyodideScript.src = "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js";
+          pyodideScript.onload = async () => {
+            let py = await window.loadPyodide();
+            setPyodide(py);
+            setIsLoadingPy(false);
+          };
+          document.body.appendChild(pyodideScript);
+        } else {
+          let py = await window.loadPyodide();
+          setPyodide(py);
+          setIsLoadingPy(false);
+        }
+      } catch (err) {
+        console.error("加载 Pyodide 失败:", err);
+        setConsoleOutput("⚠️ Python 运行环境加载失败，请检查网络连接。");
+        setIsLoadingPy(false);
+      }
+    };
+    loadPyodideAsync();
+  }, []);
+
+  // 切换题目时，如果未写代码，则填充初始代码
+  useEffect(() => {
+    if (activeExercise && !userCodes[activeExercise.id]) {
+      setUserCodes(prev => ({
+        ...prev,
+        [activeExercise.id]: activeExercise.initialCode
+      }));
+    }
+    setConsoleOutput('');
+    setIsError(false);
+    setShowAnswer(false);
+  }, [activeSectionId, activeExerciseIndex, activeExercise, userCodes]);
+
+  const toggleChapter = (chapterId) => {
+    setExpandedChapters(prev => ({
+      ...prev,
+      [chapterId]: !prev[chapterId]
+    }));
+  };
+
+  const handleSectionClick = (chapterId, sectionId) => {
+    setActiveChapterId(chapterId);
+    setActiveSectionId(sectionId);
+    setActiveExerciseIndex(0); // 切换章节时重置到第 1 题
+  };
+
+  const handleCodeChange = (e) => {
+    if (!activeExercise) return;
+    setUserCodes(prev => ({
+      ...prev,
+      [activeExercise.id]: e.target.value
+    }));
+  };
+
+  const runPythonCode = async () => {
+    if (!pyodide || !activeExercise) return;
+    
+    setIsRunning(true);
+    setConsoleOutput('运行中...');
+    setIsError(false);
+    
+    const codeToRun = userCodes[activeExercise.id];
+    
+    try {
+      await pyodide.runPythonAsync(`
+import sys
+import io
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+      `);
+      
+      await pyodide.runPythonAsync(codeToRun);
+      
+      const stdout = await pyodide.runPythonAsync("sys.stdout.getvalue()");
+      const stderr = await pyodide.runPythonAsync("sys.stderr.getvalue()");
+      
+      const finalOutput = stdout + stderr;
+      setConsoleOutput(finalOutput || '(无输出)');
+      
+      if (activeExercise.expectedOutput) {
+        const normalizedOutput = finalOutput.trim().replace(/\r\n/g, '\n');
+        const expected = activeExercise.expectedOutput.trim().replace(/\r\n/g, '\n');
+        
+        if (normalizedOutput === expected || normalizedOutput.includes(expected)) {
+            setSuccessStatus(prev => ({ ...prev, [activeExercise.id]: true }));
+        } else {
+            setSuccessStatus(prev => ({ ...prev, [activeExercise.id]: false }));
+        }
+      }
+
+    } catch (err) {
+      setIsError(true);
+      setConsoleOutput(err.toString());
+      setSuccessStatus(prev => ({ ...prev, [activeExercise.id]: false }));
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Tab' && activeExercise) {
+      e.preventDefault();
+      const textarea = e.target;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newValue = textarea.value.substring(0, start) + '    ' + textarea.value.substring(end);
+      setUserCodes(prev => ({ ...prev, [activeExercise.id]: newValue }));
+      setTimeout(() => { textarea.selectionStart = textarea.selectionEnd = start + 4; }, 0);
+    }
+  };
+
+  // 综合计算小节的通关状态（是否完成至少1题）
+  const getSectionSuccess = (section) => {
+    return section.exercises.some(ex => successStatus[ex.id]);
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50 font-sans">
+      
+      {/* 顶部导航条 */}
+      <header className="bg-slate-900 text-white p-4 shadow-md flex items-center justify-between z-10 relative">
+        <div className="flex items-center space-x-3">
+          <BookOpen className="w-6 h-6 text-blue-400" />
+          <h1 className="text-xl font-bold tracking-wide">廖雪峰 Python 强化练习平台</h1>
+        </div>
+        <div className="flex items-center space-x-4 text-sm text-gray-300">
+          {isLoadingPy ? (
+            <span className="flex items-center"><span className="animate-pulse w-2 h-2 bg-yellow-400 rounded-full mr-2"></span> Python环境加载中...</span>
+          ) : (
+            <span className="flex items-center"><span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span> Python环境已就绪</span>
+          )}
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        
+        {/* 左侧目录 */}
+        <div className="w-64 bg-white border-r border-gray-200 flex flex-col overflow-y-auto z-0">
+          <div className="p-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-600 uppercase tracking-wider flex justify-between items-center">
+            <span>课程目录</span>
+          </div>
+          <div className="flex-1 py-2">
+            {COURSE_DATA.map((chapter) => (
+              <div key={chapter.id} className="mb-1">
+                <button
+                  onClick={() => toggleChapter(chapter.id)}
+                  className="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-100 transition-colors text-left"
+                >
+                  <span className="font-medium text-gray-800">{chapter.title}</span>
+                  {expandedChapters[chapter.id] ? (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+                
+                {expandedChapters[chapter.id] && (
+                  <div className="bg-gray-50 py-1">
+                    {chapter.sections.map(section => {
+                      const isActive = activeSectionId === section.id;
+                      const isSuccess = getSectionSuccess(section);
+                      return (
+                        <button
+                          key={section.id}
+                          onClick={() => handleSectionClick(chapter.id, section.id)}
+                          className={`w-full flex items-center pl-8 pr-4 py-2 text-sm text-left transition-colors
+                            ${isActive ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-200'}`}
+                        >
+                          <span className="truncate flex-1">{section.title}</span>
+                          {isSuccess && <CheckCircle className="w-4 h-4 text-green-500 ml-2 flex-shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 右侧工作区 */}
+        <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
+          
+          {/* 题目分页栏 (水平滚动) */}
+          {activeSection && (
+            <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center overflow-x-auto whitespace-nowrap scrollbar-hide shadow-sm z-10">
+              <span className="text-sm font-bold text-gray-500 mr-4 flex-shrink-0">
+                {activeSection.title} (共10题)
+              </span>
+              <div className="flex space-x-2">
+                {activeSection.exercises.map((ex, idx) => {
+                  const isCurrent = idx === activeExerciseIndex;
+                  const passed = successStatus[ex.id];
+                  return (
+                    <button
+                      key={ex.id}
+                      onClick={() => setActiveExerciseIndex(idx)}
+                      className={`flex items-center px-3 py-1.5 text-sm rounded-full transition-all flex-shrink-0
+                        ${isCurrent 
+                          ? 'bg-blue-600 text-white shadow-md' 
+                          : passed 
+                            ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent'
+                        }`}
+                    >
+                      <span>题 {idx + 1}</span>
+                      {passed && <CheckCircle className={`w-3 h-3 ml-1 ${isCurrent ? 'text-white' : 'text-green-500'}`} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {activeExercise ? (
+            <div className="flex-1 flex flex-col overflow-y-auto">
+              
+              {/* 大章总结区块 (仅当选中小节具有 summary 属性时展示) */}
+              {activeSection.summary && (
+                <div className="p-6 bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-indigo-100 flex-shrink-0 animate-in fade-in slide-in-from-top-2">
+                  <h3 className="text-lg font-extrabold text-indigo-900 mb-2 flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-indigo-600" /> 
+                    大章阶段性回顾
+                  </h3>
+                  <div className="text-indigo-800 leading-relaxed whitespace-pre-wrap text-sm md:text-base">
+                    {activeSection.summary}
+                  </div>
+                </div>
+              )}
+
+              {/* 题目说明 */}
+              <div className="p-6 bg-white border-b border-gray-200 flex-shrink-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      {activeExerciseIndex + 1}. {activeExercise.title}
+                    </h2>
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap bg-blue-50/50 p-4 rounded-lg border border-blue-100 max-w-4xl">
+                      {activeExercise.description}
+                    </div>
+                  </div>
+                  
+                  {/* 上下题导航器 */}
+                  <div className="flex space-x-2 flex-shrink-0 ml-4">
+                    <button 
+                      onClick={() => setActiveExerciseIndex(Math.max(0, activeExerciseIndex - 1))}
+                      disabled={isFirstExercise}
+                      className="p-2 rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 transition-all text-gray-600"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => setActiveExerciseIndex(Math.min(activeSection.exercises.length - 1, activeExerciseIndex + 1))}
+                      disabled={isLastExercise}
+                      className="p-2 rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 transition-all text-gray-600"
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 答案与解析区域 */}
+                <div className="mt-4">
+                  <button 
+                    onClick={() => setShowAnswer(!showAnswer)}
+                    className="flex items-center space-x-2 text-sm text-yellow-600 font-medium hover:text-yellow-700 transition-colors bg-yellow-50 px-3 py-1.5 rounded-md border border-yellow-200"
+                  >
+                    <Lightbulb className="w-4 h-4" />
+                    <span>{showAnswer ? '隐藏答案与解析' : '查看答案与解析'}</span>
+                  </button>
+                  
+                  {showAnswer && (
+                    <div className="mt-3 p-4 bg-yellow-50/80 border border-yellow-200 rounded-lg animate-in fade-in slide-in-from-top-2 max-w-4xl">
+                      <h4 className="font-bold text-yellow-800 text-sm mb-2 flex items-center">
+                        <Eye className="w-4 h-4 mr-1"/> 参考代码
+                      </h4>
+                      <pre className="bg-white p-3 rounded border border-yellow-100 text-sm font-mono text-gray-800 overflow-x-auto whitespace-pre-wrap">
+                        {activeExercise.answer}
+                      </pre>
+                      <h4 className="font-bold text-yellow-800 text-sm mt-4 mb-2 flex items-center">
+                        <BookOpen className="w-4 h-4 mr-1"/> 原理解析
+                      </h4>
+                      <p className="text-sm text-yellow-900 leading-relaxed whitespace-pre-wrap">
+                        {activeExercise.explanation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 代码编辑区和控制台 */}
+              <div className="flex-1 flex flex-col lg:flex-row p-4 gap-4 overflow-hidden min-h-[400px]">
+                
+                {/* 编辑器 */}
+                <div className="flex-1 flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="bg-slate-800 text-gray-200 px-4 py-2 flex justify-between items-center text-sm font-mono border-b border-slate-700">
+                    <div className="flex items-center space-x-2">
+                      <Code className="w-4 h-4" />
+                      <span>main.py</span>
+                    </div>
+                    <button
+                      onClick={runPythonCode}
+                      disabled={isLoadingPy || isRunning}
+                      className={`flex items-center space-x-1 px-4 py-1.5 rounded text-white font-medium transition-colors shadow-sm
+                        ${isLoadingPy || isRunning 
+                          ? 'bg-slate-600 cursor-not-allowed' 
+                          : 'bg-green-600 hover:bg-green-500'}`}
+                    >
+                      <Play className="w-4 h-4 fill-current" />
+                      <span>{isRunning ? '运行中...' : '运行并测试'}</span>
+                    </button>
+                  </div>
+                  <textarea
+                    value={userCodes[activeExercise.id] || ''}
+                    onChange={handleCodeChange}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 w-full p-4 bg-slate-900 text-slate-100 font-mono text-base leading-relaxed resize-none focus:outline-none"
+                    spellCheck="false"
+                    placeholder="在此编写您的 Python 代码..."
+                  />
+                </div>
+
+                {/* 控制台 */}
+                <div className="flex-1 flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="bg-gray-100 text-gray-700 px-4 py-2 flex items-center justify-between text-sm font-medium border-b border-gray-200">
+                    <div className="flex items-center space-x-2">
+                      <Terminal className="w-4 h-4" />
+                      <span>执行结果与反馈</span>
+                    </div>
+                  </div>
+                  <div className={`flex-1 p-4 font-mono text-sm overflow-y-auto whitespace-pre-wrap
+                    ${isError ? 'bg-red-50 text-red-700' : 'bg-slate-950 text-green-400'}`}
+                  >
+                    {consoleOutput || <span className="text-gray-500 italic">尚未执行，点击 "运行并测试" 查看输出...</span>}
+                  </div>
+                  
+                  {/* 状态栏 */}
+                  <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 flex items-center justify-between text-sm">
+                    {successStatus[activeExercise.id] === true && (
+                      <div className="flex items-center justify-between w-full">
+                        <span className="flex items-center text-green-600 font-medium">
+                          <CheckCircle className="w-5 h-5 mr-1" />
+                          恭喜过关！输出结果完全符合预期。
+                        </span>
+                        {!isLastExercise && (
+                          <button 
+                            onClick={() => setActiveExerciseIndex(activeExerciseIndex + 1)}
+                            className="flex items-center space-x-1 text-blue-600 font-medium hover:text-blue-800"
+                          >
+                            <span>下一题</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {successStatus[activeExercise.id] === false && consoleOutput && !isError && (
+                      <span className="flex items-center text-yellow-600 font-medium">
+                        <AlertCircle className="w-5 h-5 mr-1" />
+                        输出结果不匹配（预期输出: {activeExercise.expectedOutput}），请检查代码。
+                      </span>
+                    )}
+                    {isError && (
+                      <span className="flex items-center text-red-600 font-medium">
+                        <AlertCircle className="w-5 h-5 mr-1" />
+                        代码执行发生错误，请查看控制台报错详情。
+                      </span>
+                    )}
+                    {!consoleOutput && !isError && <span className="text-gray-400">编写代码并运行验证</span>}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-gray-400">
+              <p>题目加载异常</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
